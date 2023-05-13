@@ -1,9 +1,10 @@
 from requests import get
 import os
-
-API_KEY = os.getenv('API_KEY')
-ENDPOINT = os.getenv('ENDPOINT')
-
+import redis
+#API_KEY = os.getenv('API_KEY')
+#ENDPOINT = os.getenv('ENDPOINT')
+API_KEY='FCdYqOWk3DgjsyurvwskQNrEyxt5dAnRXdpHbeu4'
+ENDPOINT='https://api.freecurrencyapi.com/v1/latest'
 
 def get_currency_rate(base_currency:str,to_currency:str):
     url = f'{ENDPOINT}?apikey={API_KEY}&base_currency={base_currency}&currency={to_currency}'
@@ -23,3 +24,6 @@ def get_all_currencies():
     responce = get(url).json()['data']
     return responce
 
+r = redis.Redis(host='localhost', port=6379,db=0,decode_responses=True) # async
+r.json().set('test','$',get_all_currencies())
+print(r.json().get('test'))
