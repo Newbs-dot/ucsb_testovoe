@@ -2,7 +2,6 @@ from aiohttp import web
 from converter import *
 import redis
 import json
-#from aiohttp_swagger import *
 
 routes = web.RouteTableDef()
 
@@ -31,8 +30,6 @@ async def merge_handler(request):
             data={"success": "Updated rates"},
             status=200
         )
-        
-    
 
 @routes.get('/convert')
 async def convert_handler(request):
@@ -49,11 +46,12 @@ async def convert_handler(request):
     responce = {'from':from_currency,'to':to_currency,'amount':amount}
     r = redis.Redis(host='localhost', port=6379,db=0,decode_responses=True) # async
 
-    cache = r.hget('rates',f"{from_currency}:{to_currency}")
-    
+    cache = r.json().get('rates')
+   
     if cache:
         try:
-            responce['result'] = convert_currencies(float(cache),amount)
+            rate = cache[to_currency] / cache[from_currency]
+            responce['result'] = convert_currencies(float(rate),amount)
             return web.json_response(responce)
         except Exception as e:
             return web.json_response(
@@ -62,7 +60,8 @@ async def convert_handler(request):
             )
     else:
         try:
-            rate = await cache_rate(from_currency,to_currency)
+            cache = await update_rates()
+            rate = cache[to_currency] / cache[from_currency]
             responce['result'] = convert_currencies(rate,amount)
             return web.json_response(responce)
         except Exception as e:
@@ -70,62 +69,12 @@ async def convert_handler(request):
                 data={"error": str(e)},
                 status=404
             )
-'''
-@routes.get('/convert')
-async def convert_handler(request):
-    try:
-        from_currency = request.rel_url.query['from']
-        to_currency = request.rel_url.query['to']
-        amount = request.rel_url.query['amount']
-    except:
-        return web.json_response(
-            data={"error": "Bad request"},
-            status=404
-        )
 
-    responce = {'from':from_currency,'to':to_currency,'amount':amount}
-    r = redis.Redis(host='localhost', port=6379,db=0,decode_responses=True) # async
-
-    cache = r.get json
-    
-    if cache:
-        try:
-            responce['result'] = convert_currencies(float(cache),amount)
-            return web.json_response(responce)
-        except Exception as e:
-            return web.json_response(
-                data={"error": str(e)},
-                status=404
-            )
-    else:
-        try:
-            rate = await get all currency
-            responce['result'] = convert_currencies(rate,amount)
-            return web.json_response(responce)
-        except Exception as e:
-            return web.json_response(
-                data={"error": str(e)},
-                status=404
-            )
-'''
-async def cache_rate(from_currency:str,to_currency:str):
-    r = redis.Redis(host='localhost', port=6379,db=0,decode_responses=True)
-    rate = get_currency_rate(from_currency,to_currency)
-    r.hset('rates',f"{from_currency}:{to_currency}",rate)
-    r.hset('rates',f"{to_currency}:{from_currency}",1/rate) #та же валютная пара, но обратно 
-    return rate
-    
 async def update_rates():
     new_rates = get_all_currencies()
     r = redis.Redis(host='localhost', port=6379,db=0,decode_responses=True)
-    current_rates = r.hgetall('rates')
-
-    for pair in current_rates:
-        p = pair.split(':')
-        base_currency = new_rates[p[1]]
-        to_currency = new_rates[p[0]]
-
-        r.hset('rates',pair,base_currency/to_currency)
+    r.json().set('rates','$',new_rates)
+    return new_rates
 
 app = web.Application()
 app.add_routes(routes)
@@ -135,6 +84,5 @@ def redis_connecton():
     return redis.StrictRedis(connection_pool=connection_pool)
 
 if __name__ == '__main__':
-    #setup_swagger(app, swagger_url="/doc", ui_version=3,swagger_from_file='./templates/swagger.yaml')
     web.run_app(app)
 
