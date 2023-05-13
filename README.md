@@ -16,3 +16,12 @@ google.com
 ```
 docker compose up
 ```
+## Запрос
+Пример запроса
+```
+curl -F file=@tests/data/aircraft.jpg http://localhost:8000/predict
+```
+Пример ответа
+```
+12345
+```
