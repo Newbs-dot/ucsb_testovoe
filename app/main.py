@@ -6,11 +6,12 @@ import asyncio
 
 routes = web.RouteTableDef()
 
+
 @routes.post('/database')
 async def merge_handler(request):
     try:
         flag = request.rel_url.query['merge']
-        assert (flag == '0' or flag=='1') 
+        assert (flag == '0' or flag == '1')
     except:
         return web.json_response(
             data={"error": "Bad request"},
@@ -30,6 +31,7 @@ async def merge_handler(request):
                 status=200
             )
 
+
 @routes.get('/convert')
 async def convert_handler(request):
     try:
@@ -42,14 +44,14 @@ async def convert_handler(request):
             status=404
         )
 
-    responce = {'from':from_currency,'to':to_currency,'amount':amount}
+    responce = {'from': from_currency, 'to': to_currency, 'amount': amount}
 
     async with request.app['redis'] as redis_connection:
         cache = await redis_connection.json().get('rates')
         if cache:
             try:
                 rate = cache[to_currency] / cache[from_currency]
-                responce['result'] = await convert_currencies(float(rate),amount)
+                responce['result'] = await convert_currencies(float(rate), amount)
                 return web.json_response(responce)
             except Exception as e:
                 return web.json_response(
@@ -60,7 +62,7 @@ async def convert_handler(request):
             try:
                 cache = await update_rates(redis_connection)
                 rate = cache[to_currency] / cache[from_currency]
-                responce['result'] = await convert_currencies(rate,amount)
+                responce['result'] = await convert_currencies(rate, amount)
                 return web.json_response(responce)
             except Exception as e:
                 return web.json_response(
@@ -68,14 +70,16 @@ async def convert_handler(request):
                     status=404
                 )
 
+
 async def update_rates(redis_connection):
     new_rates = await get_all_currencies()
-    await redis_connection.json().set('rates','$',new_rates)
+    await redis_connection.json().set('rates', '$', new_rates)
     return new_rates
+
 
 async def init_app():
     app = web.Application()
-    redis_db = await redis.Redis(host='redis-stack', port=6379,db=0,decode_responses=True)
+    redis_db = await redis.Redis(host='redis-stack', port=6379, db=0, decode_responses=True)
     app['redis'] = redis_db
     app.add_routes(routes)
 
@@ -85,4 +89,3 @@ if __name__ == '__main__':
     loop = asyncio.get_event_loop()
     app = loop.run_until_complete(init_app())
     web.run_app(app)
-
