@@ -1,25 +1,32 @@
 # Конвертер валют
 
 ## Принцип работы приложения
-![Блок схема]()
 При первом запросе конвертации, курсы валют с внешнего api кешируются в redis в виде json. При последующих запросах конвертации данные получаем из redis, не отправляя запросов к внешнему api.
 POST запросом merge == 0 очищаем базу данных. Merge == 1 обновляет курсы валют, отправляя запрос к внешнему api  
 
 ## Запуск
 Перед началом работы следует скачать .env файл в корневую директорию приложения по ссылке:
 ```
-google.com
+https://drive.google.com/drive/folders/1qV9VBRAOP_7Z3uumr1AS_Y4QzhB_ncA5?usp=sharing
 ```
 Далее запускаем докер через compose
 
 ## Запрос
-Пример запроса
+Пример запроса GET
 ```
-curl -F file=@tests/data/aircraft.jpg http://localhost:8000/predict
+http://localhost:8080/convert?from=USD&to=RUB&amount=100
 ```
 Пример ответа
 ```
-12345
+{"from": "USD", "to": "RUB", "amount": "100", "result": 7736.01}
+```
+Пример запроса POST
+```
+curl -XPOST 'http://localhost:8080/database?merge=1'
+```
+Пример ответа
+```
+{"success": "Updated rates"}
 ```
 
 ## Доступные валютные тикеры внешнего API с данными о курсах валют
