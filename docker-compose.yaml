@@ -6,13 +6,13 @@ services:
     environment:
       - REDIS_URL=redis://redis:6379
     depends_on:
-      - redis-db
+      - redis-stack
     env_file:
       - .env
     ports:
       - 8080:8080
 
-  redis-db:
+  redis-stack:
     image: "redis/redis-stack:latest"
     ports:
       - "6379:6379"

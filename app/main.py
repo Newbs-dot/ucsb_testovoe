@@ -75,7 +75,7 @@ async def update_rates(redis_connection):
 
 async def init_app():
     app = web.Application()
-    redis_db = await redis.Redis(host='redis-db', port=6379,db=0,decode_responses=True)
+    redis_db = await redis.Redis(host='redis-stack', port=6379,db=0,decode_responses=True)
     app['redis'] = redis_db
     app.add_routes(routes)
 
